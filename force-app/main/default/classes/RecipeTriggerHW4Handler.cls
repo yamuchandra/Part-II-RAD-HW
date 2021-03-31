@@ -9,13 +9,13 @@ public class RecipeTriggerHW4Handler {
     // -----------Trigger Handler Class Variables -----------------------------------------------
 
     List<Recipe__c> newRecipes;
-    Map<ID, Recipe__c> newRecipeMap;
-
+    
     //------Constructor receives the recipes being processed by this trigger and assigns them to class variables--------
 
-    public RecipeTriggerHW4Handler (List<Recipe__c> newRecipes1, Map<ID, Recipe__c> newRecipeMap1) {
+    // We are not comparing old values in following methods, so no newMap is needed
+
+    public RecipeTriggerHW4Handler (List<Recipe__c> newRecipes1) {
         this.newRecipes = newRecipes1;
-        this.newRecipeMap = newRecipeMap1;
     }
 
 
@@ -45,8 +45,8 @@ public class RecipeTriggerHW4Handler {
 
         for(Recipe__c recipe: this.newRecipes) {
 
-            Integer retRating;
-            retRating = HelperFunctions.rateRecipeComplexity(recipe);  
+            //Integer retRating;
+            Integer retRating = HelperFunctions.rateRecipeComplexity(recipe);  
             
             System.debug('Recipe rating number ' + retRating);
             
@@ -63,6 +63,8 @@ public class RecipeTriggerHW4Handler {
 
     }                  
 
+
+     
 
     public void handleAfterUpdate() {
 
@@ -83,8 +85,10 @@ public class RecipeTriggerHW4Handler {
 
         List<Task> reviewTask = new List<Task>();
 
-        Map<Id,Recipe__c> cookbookRecipe = new Map<Id,Recipe__c>([SELECT ID, (SELECT ID,Recipe__c,Cookbook__c FROM Recipe_Usages__r ) FROM Recipe__c WHERE ID IN :this.newRecipes]);
-        System.debug('cookbookRecipe Map items: ' + cookbookRecipe);
+        //Select 'Cookbook Name and Cookbook OwnerId' from 'Recipe Usage object'
+
+        List<Recipe__c> cookbookRecipe = [SELECT ID, (SELECT ID,Recipe__c,Cookbook__c, Cookbook__r.Name, Cookbook__r.OwnerID FROM Recipe_Usages__r ) FROM Recipe__c WHERE ID IN :this.newRecipes];
+        System.debug('Cookbook Recipe List items: ' + cookbookRecipe);
 
         
         for(Recipe__c recipe: this.newRecipes) {            
@@ -92,13 +96,23 @@ public class RecipeTriggerHW4Handler {
             if((recipe.Draft__c == false) && (!cookbookRecipe.isEmpty())){
 
                 System.debug('Is Draft' + recipe.Draft__c + ' Cookbook refers Recipe? ' + cookbookRecipe.isEmpty() );
+                
+                //Loop through related Recipe_Usages__r records
+                //Note for child relationship object (plural+__r)
+                for (Recipe_Usage__c recUsage : recipe.Recipe_Usages__r){
 
-                Task cbtask = new Task();
-                Recipe__c c = cookbookRecipe.get(recipe.id);//.get(Recipe_Usages__r.id).Cookbook__c.id;
-                System.debug('hello' +c);
-                //cbtask.OwnerId = cookbookRecipe.get(recipe.id).Recipe_Usages__r.Cookbook__c.OwnerId;
-                cbtask.ActivityDate = System.today() + 7;
-                reviewTask.add(cbtask);
+                    Task cbtask = new Task();
+                    cbtask.ActivityDate = System.today() + 7;
+                    // Cookbook OwnerID = task OwnerID
+                    cbtask.OwnerID = recUsage.Cookbook__r.OwnerID;
+                    cbtask.WhatId = recUsage.Cookbook__r.Name;
+                    cbtask.Status = 'In Progress';
+                    cbtask.Type = 'Other';
+
+                    System.debug('hello' + cbtask);
+                                
+                    reviewTask.add(cbtask);
+                }
                                 
             }
         }

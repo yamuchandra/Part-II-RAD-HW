@@ -13,7 +13,7 @@ trigger RecipeTriggerHW4 on Recipe__c (before insert, before update, after updat
     
     // ****************Instantiate the Handler and set Trigger records***************
 
-    RecipeTriggerHW4Handler handler = new RecipeTriggerHW4Handler(Trigger.new, Trigger.newMap);
+    RecipeTriggerHW4Handler handler = new RecipeTriggerHW4Handler(Trigger.new);
 
     // ***********First, we have a simple if/else if block separating inserts from updates*************
     // ***********This helps trigger performance and keeps triggers with lots of handlers more readable**********
