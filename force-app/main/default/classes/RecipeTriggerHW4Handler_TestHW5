@@ -1,0 +1,219 @@
+@isTest
+private class RecipeTriggerHW4Handler_TestHW5 {
+    
+    //Test Data Setup which will be ready when the class is called
+    @testSetup
+    static void testDataSetup(){
+        List<Recipe__c> recipes = TestFactory.prepareRecipeList(4,4,false);
+        List<Cookbook__c> cookbooks = TestFactory.prepareRecipeList(2,true);
+        //List<Recipe_Usage__c> recUsages = TestFactory.prepareRecipeUsageList();
+
+        List <Recipe_Usage__c> recUsages = new List<Recipe_Usage__c>();
+        
+        for (Recipe__c r : recipes){
+            for(Cookbook__c cb : cookbooks){
+                recUsages.Recipe__c = r.Id;          
+                recUsages.Cookbook__c = cb.Id;
+            }
+        }
+
+
+        //List<sObject> recipes = Test.loadData(Recipe__c.SObjectType, 'recipes');
+    }
+ 
+    /*************************************************************************************************************************************
+    //a.i)If a recipe is missing any key value mark it as Draft. \/
+    (Name, Active_Time__c, Description__c, Active_Time_Units__c, Servings__c)
+    //a.i)Create recipe with missing key values. And assert as a Draft recipe.
+    **************************************************************************************************************************************/
+
+    @isTest
+    static void isDraftRecipe() {
+
+        // Query recipe record from test data created using @testSetup method
+        List<Recipe__c> recs = [SELECT Id,Name,Active_Time__c,Active_Time_Units__c,Description__c,Servings__c FROM Recipe__c LIMIT 200];
+
+        
+        Test.startTest();
+            insert recs;
+        Test.stopTest();
+
+        
+        List<Recipe__c> recInserted = [SELECT Id, Name, Description__c, Draft__c FROM Recipe__c WHERE Id = :recs.Id];
+
+        for(Recipe__c r: recInserted){
+            System.assertEquals(true, recInserted.Draft__c, 'A Recipe missing required field/s is marked as a Draft');
+        }
+    }
+
+    /*************************************************************************************************************************************
+    //a.i)If a recipe is poulated with all key values mark it as Non-Draft.  \/
+    (Name, Active_Time__c, Description__c, Active_Time_Units__c, Servings__c)
+    //a.i)Create recipe with all required key values. And assert as a Non-Draft recipe.
+    **************************************************************************************************************************************/
+
+
+    @isTest
+    static void isNotDraftRecipe() {
+
+        // Query recipe record from test data created using @testSetup method
+        List<Recipe__c> recs = [SELECT Id,Name,Active_Time__c,Active_Time_Units__c,Description__c,Servings__c FROM Recipe__c LIMIT 200];
+        List<Recipe__c> recsInserted = new List<Recipe__c>();
+
+        for(Recipe__c r: recs){
+
+            r.Description__c = 'Test recipe';
+            r.Active_Time_Units__c = 'Hours';
+            recsInserted.add(r);
+        }
+
+        Test.startTest();
+            insert recsInserted;
+        Test.stopTest();
+
+        List<Recipe__c> recsInserted = [SELECT Id, Name, Complexity__c, Description__c, Draft__c FROM Recipe__c WHERE Id = :recs.Id];
+
+
+        for(Recipe__c r: recsInserted){
+            System.assertEquals(false, recsInserted.Draft__c, 'A Recipe populated with all required fields is marked as Not Draft');
+        }
+    }
+    
+    /*****************************************************************************************************************************************************
+    //a.ii)Check if a recipe is a difficult Recipe. 
+    "Condition: If the recipe has an active time of an hour or more, it's difficult(HelperFunctions Class)"
+    //a.ii)Create recipe with the conditions for diffilcult recipe. And assert as Difficult.
+    ******************************************************************************************************************************************************/
+    
+
+    @isTest
+    static void isDifficultRecipe(){
+
+        List<Recipe__c> recs = [SELECT Id,Name,Active_Time__c,Active_Time_Units__c,Description__c,Servings__c FROM Recipe__c LIMIT 200];
+        List<Recipe__c> recsInserted = new List<Recipe__c>();
+
+        for(Recipe__c r: recs){
+
+            r.Active_Time__c = 2;
+            r.Description__c = 'Difficult recipe';
+            r.Active_Time_Units__c = 'Hours';
+            recsInserted.add(r);
+
+        }
+
+        Test.startTest();
+            insert recsInserted;
+        Test.stopTest();
+
+        List<Recipe__c> recsInserted = [SELECT Id, Name, Complexity__c, Description__c, Draft__c FROM Recipe__c WHERE Id = :recs.Id];
+
+
+        for(Recipe__c r: recsInserted){
+            System.assertEquals('Difficult', recsInserted.Complexity__c, 'Recipe has more than an hour of Active time - Difficult Recipe');
+        }
+        
+    }
+
+    /*****************************************************************************************************************************************************
+    //a.ii)Check if a recipe is a  Moderate Recipe. 
+    "Condition: If it's less than an hour but it has over 6 servings, we'll call it moderate (HelperFunctions Class)"
+    //a.ii)Create recipe with the conditions for moderate recipe. And assert as Moderate.
+    ******************************************************************************************************************************************************/
+    
+
+    @isTest
+    static void isModerateRecipe(){
+
+        List<Recipe__c> recs = [SELECT Id,Name,Active_Time__c,Active_Time_Units__c,Description__c,Servings__c FROM Recipe__c LIMIT 200];
+        List<Recipe__c> recsInserted = new List<Recipe__c>();
+
+        for(Recipe__c r: recs){
+
+            r.Active_Time__c = 50;
+            r.Description__c = 'Moderate recipe';
+            r.Active_Time_Units__c = 'Minutes';
+            r.Servings__c = 8;
+            recsInserted.add(r);
+
+        }
+
+        Test.startTest();
+            insert recsInserted;
+        Test.stopTest();
+
+        List<Recipe__c> recsInserted = [SELECT Id, Name, Complexity__c, Description__c, Draft__c FROM Recipe__c WHERE Id = :recs.Id];
+
+
+        for(Recipe__c r: recsInserted){
+            System.assertEquals('Moderate', recsInserted.Complexity__c, 'Recipe has less than an hour & more than 6 Servings - Moderate Recipe');
+        }
+        
+    }
+
+    /*****************************************************************************************************************************************************
+    //a.ii)Check if a recipe is a  Simple Recipe. 
+    "Condition: If it's less than an hour and it has <= 6 servings, we'll call it simple (HelperFunctions Class)"
+    //a.ii)Create recipe with the conditions for simple recipe. And assert as Simple.
+    ******************************************************************************************************************************************************/
+    
+
+    @isTest
+    static void isSimpleRecipe(){
+
+        List<Recipe__c> recs = [SELECT Id,Name,Active_Time__c,Active_Time_Units__c,Description__c,Servings__c FROM Recipe__c LIMIT 200];
+        List<Recipe__c> recsInserted = new List<Recipe__c>();
+
+        for(Recipe__c r: recs){
+
+            r.Active_Time__c = 50;
+            r.Description__c = 'Moderate recipe';
+            r.Active_Time_Units__c = 'Minutes';
+            r.Servings__c = 6;
+            recsInserted.add(r);
+
+        }
+
+        Test.startTest();
+            insert recsInserted;
+        Test.stopTest();
+
+        List<Recipe__c> recsInserted = [SELECT Id, Name, Complexity__c, Description__c, Draft__c FROM Recipe__c WHERE Id = :recs.Id];
+
+
+        for(Recipe__c r: recsInserted){
+            System.assertEquals('Simple', recsInserted.Complexity__c, 'Recipe has less than an hour & <= 6 Servings - Simple Recipe');
+        }
+        
+    }
+
+    /*****************************************************************************************************************************************************
+    //a.iii)Check if a task is created in Coookbook object. -----------
+    //a.iii)Create recipe with the conditions for simple recipe. And assert as Simple.
+    ******************************************************************************************************************************************************/
+
+    @isTest
+    static void hasCookbookTaskCreated(){
+        List<Recipe__c> rec = [SELECT Id, Name, Active_Time__c, Active_Time_Units__c, Complexity__c, Description__c, Draft__c FROM Recipe__c LIMIT 200];
+        
+        for(Recipe__c r : rec){
+            r.Active_Time__c = 45;
+            r.Active_Time_Units__c = 'Minutes';
+            r.Description__c = 'Cookbook Task Created Recipe';
+            r.Servings__c = 15;
+            rec.add(r);
+        }
+
+                
+        Test.startTest();
+            insert rec;
+            insert recUsages;
+        Test.stopTest();
+        
+        List<Task> cbTasks = new List<Task>([SELECT Id, ActivityDate, Priority, Status, Subject, WhatId FROM Task WHERE WhatId = :cookbooks.Id]);
+
+        system.debug("Cookbook Tasks List created ...."+ cbTasks);
+        System.assertEquals(2, cbTasks.size(),"Task created for Cookbooks associated with Recipe...");
+    }
+    
+
+}    
