@@ -14,8 +14,8 @@ public class RecipeTriggerHW4Handler {
 
     // We are not comparing old values in following methods, so no newMap is needed
 
-    public RecipeTriggerHW4Handler (List<Recipe__c> newRecipes1) {
-        this.newRecipes = newRecipes1;
+    public RecipeTriggerHW4Handler (List<Recipe__c> newRecipesFromTrigger) {
+        this.newRecipes = newRecipesFromTrigger;
     }
 
 
@@ -25,18 +25,30 @@ public class RecipeTriggerHW4Handler {
                   If it is missing one or more of the following, check the Draft__c field on the recipe:******
                   Name, Active_Time__c, Description__c, Active_Time_Units__c, Servings__c ******/
 
-        for(Recipe__c recipe: this.newRecipes) {
+            
 
-            if((recipe.Name == null) || (recipe.Active_Time__c == null) || (recipe.Description__c == null) || (recipe.Active_Time_Units__c == null) || (recipe.Servings__c == null)) {
-                                
+        for(Recipe__c recipe: this.newRecipes) {
+            
+
+            if((String.isblank(recipe.Name)) || (recipe.Active_Time__c == null) || (String.isblank(recipe.Description__c)) || (String.isblank(recipe.Active_Time_Units__c)) || (recipe.Servings__c == null)) {
+                
+            //Wee6HW 6.ii) Starting
+                recipe.addError('Following Field/s is/are missing entries : Name, Active Time, Description, Active Time Units, Servings ');                 
+            //Week6HW 6.ii) Ending
+
+                             
                 recipe.Draft__c = True;
                 System.debug('Draft recipe');
-
+                
+            }
+            else {
+                recipe.Draft__c = false;
+                System.debug('Not a Draft recipe');
             }
 
         }
 
-        /* **** 1.b.ii) We also want to rate the complexity of a recipe. Create a method that checks before a recipe is inserted or updated and does the following:
+        /****** 1.b.ii) We also want to rate the complexity of a recipe. Create a method that checks before a recipe is inserted or updated and does the following:
                 Calls out to a method on the HelperFunctions class called rateRecipeComplexity. This method already exists in your org!
                 Gets the numerical rating back from the method and use it to fill in the Complexity__c field.
                 FYI: If the method returns a 3, that’s ‘Difficult’, a 2 is ‘Moderate’ and a 1 is ‘Simple’
@@ -105,13 +117,15 @@ public class RecipeTriggerHW4Handler {
                     cbtask.ActivityDate = System.today() + 7;
                     // Cookbook OwnerID = task OwnerID
                     cbtask.OwnerID = recUsage.Cookbook__r.OwnerID;
-                    cbtask.WhatId = recUsage.Cookbook__r.Name;
+                    cbtask.WhatId = recUsage.Cookbook__r.Id;
                     cbtask.Status = 'In Progress';
                     cbtask.Type = 'Other';
 
                     System.debug('hello' + cbtask);
                                 
                     reviewTask.add(cbtask);
+
+                    
                 }
                                 
             }
